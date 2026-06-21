@@ -9,12 +9,11 @@ const GREEN = '#3CB98C'
 const CREAM = '#F3F0EA'
 const ease  = [0.16, 1, 0.3, 1] as [number, number, number, number]
 
-/* Contact enquiries are emailed here via FormSubmit's free AJAX endpoint.
-   No backend, no account, no library — just a POST. The first submission
-   triggers a one-time confirmation email to this address; click its
-   activation link once and all future submissions are delivered. */
+/* Contact enquiries are emailed via Web3Forms. The recipient
+   (connect@bivry.com.au) is configured on the Web3Forms account tied to
+   this access key. No backend or npm library — just a POST. */
 const CONTACT_EMAIL = 'connect@bivry.com.au'
-const FORMSUBMIT_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`
+const WEB3FORMS_KEY = '55ada32f-5a18-4f86-a719-e43a06b85974'
 
 const ALL_SERVICES = [
   'Interstate Road Transport', 'Container Movement', 'Regional Deliveries',
@@ -458,23 +457,22 @@ export function ContactPage() {
     setSendError(null)
 
     try {
-      const res = await fetch(FORMSUBMIT_ENDPOINT, {
+      const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          _subject:           `New enquiry from ${form.name} - Bivry website`,
-          _template:          'table',
-          _captcha:           'false',
-          Name:               form.name,
-          Email:              form.email,
-          Company:            form.company || 'Not provided',
-          'Service required': form.service || 'Not specified',
-          Message:            form.message || 'No message',
+          access_key:   WEB3FORMS_KEY,
+          subject:      `New enquiry from ${form.name} - Bivry website`,
+          from_name:    'Bivry Website',
+          name:         form.name,
+          email:        form.email,
+          company:      form.company || 'Not provided',
+          service_type: form.service || 'Not specified',
+          message:      form.message || 'No message',
         }),
       })
       const data = await res.json()
-      // FormSubmit AJAX returns success as the string "true".
-      if (!res.ok || String(data.success) !== 'true') {
+      if (!res.ok || !data.success) {
         throw new Error(data.message || 'Submission failed')
       }
       setSubmitted(true)
