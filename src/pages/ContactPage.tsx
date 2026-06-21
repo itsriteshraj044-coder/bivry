@@ -9,9 +9,9 @@ const GREEN = '#3CB98C'
 const CREAM = '#F3F0EA'
 const ease  = [0.16, 1, 0.3, 1] as [number, number, number, number]
 
-/* Web3Forms — submissions are delivered to connect@bivry.com.au
-   (recipient is configured on the Web3Forms account tied to this key). */
-const WEB3FORMS_KEY = '55ada32f-5a18-4f86-a719-e43a06b85974'
+/* Where contact enquiries are sent. No external library/service is used —
+   on submit we open the visitor's own email app pre-filled (mailto:). */
+const CONTACT_EMAIL = 'connect@elomagroup.org'
 
 const ALL_SERVICES = [
   'Interstate Road Transport', 'Container Movement', 'Regional Deliveries',
@@ -448,34 +448,31 @@ export function ContactPage() {
     return () => clearTimeout(t)
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim() || !form.email.trim()) return
     setSubmitting(true)
     setSendError(null)
 
     try {
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          access_key:   WEB3FORMS_KEY,
-          subject:      `New enquiry from ${form.name} - Bivry website`,
-          from_name:    'Bivry Website',
-          name:         form.name,
-          email:        form.email,
-          company:      form.company || 'Not provided',
-          service_type: form.service || 'Not specified',
-          message:      form.message || 'No message',
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Submission failed')
-      }
+      const subject = `New enquiry from ${form.name} - Bivry website`
+      const body =
+        `Name: ${form.name}\n` +
+        `Email: ${form.email}\n` +
+        `Company: ${form.company || 'Not provided'}\n` +
+        `Service required: ${form.service || 'Not specified'}\n\n` +
+        `Message:\n${form.message || 'No message'}\n`
+
+      const mailto =
+        `mailto:${CONTACT_EMAIL}` +
+        `?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(body)}`
+
+      // Opens the visitor's email app with everything pre-filled — they press Send.
+      window.location.href = mailto
       setSubmitted(true)
     } catch {
-      setSendError('Something went wrong - please try again or email us directly at connect@bivry.com.au')
+      setSendError(`Couldn't open your email app - please email us directly at ${CONTACT_EMAIL}`)
     } finally {
       setSubmitting(false)
     }
@@ -704,10 +701,10 @@ export function ContactPage() {
               >
                 <CheckCircle size={52} color={GREEN} strokeWidth={1.5} />
                 <h3 style={{ fontSize: 28, fontWeight: 900, color: NAVY, margin: 0, letterSpacing: '-0.03em' }}>
-                  Message Sent!
+                  Almost there!
                 </h3>
                 <p style={{ fontSize: 15, color: 'rgba(8,33,60,0.5)', lineHeight: 1.7, margin: 0, maxWidth: 380 }}>
-                  Our team will get back to you within 4 business hours. We look forward to moving freight with you.
+                  Your email app has opened with your details ready. Just press <strong style={{ color: NAVY }}>Send</strong> and our team will get back to you within 4 business hours.
                 </p>
                 <button
                   onClick={() => { setSubmitted(false); setSendError(null); setForm({ name:'',email:'',company:'',service:'',message:'' }) }}
